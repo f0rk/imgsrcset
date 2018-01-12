@@ -8,7 +8,7 @@ Usage:
 ~$ mkdir /tmp/imgsrcset-test/
 ~$ imgsrcset /tmp/source.jpg 320 640 1200 -o /tmp/imgsrcset-test/
 ~$ ls /tmp/imgsrcset-test/
-
+source-320w.jpg  source-640w.jpg
 
 Note that `-o` is optional. If you do not supply an output path, the path that
 the original source image is located in will be used.
