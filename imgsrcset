@@ -1,0 +1,113 @@
+#!/usr/bin/env python
+
+import argparse
+import os.path
+import subprocess
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("source", help="source image to create versions of")
+parser.add_argument(
+    "--force-upsize",
+    help=(
+        "by default, if the source image is smaller than the requested size, "
+        "no version for that size will be created. setting this option will "
+        "cause such a version to be created. specify 'noscale' to emit the "
+        "appropriately named file, without enlarging the image (recommended). "
+        "specify 'scale' to enlarge the image (not recommended)."
+    ),
+    choices=[
+        "noscale",
+        "scale",
+    ],
+)
+parser.add_argument(
+    "--output",
+    "-o",
+    help=(
+        "the directory to output the images to. defaults to the directory the "
+        "source image is in."
+    ),
+)
+parser.add_argument(
+    "width",
+    nargs="+",
+    help="width of images to emit, in pixels",
+)
+
+args = parser.parse_args()
+
+
+if args.output:
+    output_path = args.output
+else:
+    output_path, _ = os.path.split(args.source)
+
+_, file_name = os.path.split(args.source)
+
+prefix, extension = os.path.splitext(file_name)
+
+widths = [int(w) for w in args.width]
+widths.sort()
+
+# determine the current size of the image
+size_args = [
+    "identify",
+    "-format",
+    "%w",
+    args.source,
+]
+
+size_process = subprocess.Popen(
+    size_args,
+    stdout=subprocess.PIPE,
+)
+
+source_size, _ = size_process.communicate()
+
+if size_process.returncode != 0:
+    raise Exception("Failed to determine image size")
+
+source_size = int(source_size)
+
+# filter widths appropriately
+if args.force_upsize is None:
+    widths = [w for w in widths if w <= source_size]
+
+for width in widths:
+
+    output_file_name = "{}-{}w{}".format(prefix, width, extension)
+    output_file_path = os.path.join(output_path, output_file_name)
+
+    if width > source_size:
+
+        # should have been filtered above
+        if args.force_upsize is None:
+            raise Exception("Implementation Error")
+
+        # set the width to be the source size
+        elif args.force_upsize == "noscale":
+            width = source_size
+
+        # allow the upscale
+        elif args.force_upsize == "scale":
+            pass
+
+        # unknown value
+        else:
+            raise Exception("Implementation Error")
+
+    resize_args = [
+        "convert",
+        args.source,
+        "-resize",
+        "{}x".format(width),
+        output_file_path,
+    ]
+
+    resize_process = subprocess.Popen(resize_args)
+    resize_process.communicate()
+
+    if resize_process.returncode != 0:
+        raise Exception("Resizing image failed")
+

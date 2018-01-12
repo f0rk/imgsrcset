@@ -1,0 +1,14 @@
+Convert a source image into sizes suitable for use in an HTML <img> tag's srcset attribute.
+
+Requires python and that imagemagick's identify and convert commands to be
+installed.
+
+Usage:
+
+~$ mkdir /tmp/imgsrcset-test/
+~$ imgsrcset /tmp/source.jpg 320 640 1200 -o /tmp/imgsrcset-test/
+~$ ls /tmp/imgsrcset-test/
+
+
+Note that `-o` is optional. If you do not supply an output path, the path that
+the original source image is located in will be used.
